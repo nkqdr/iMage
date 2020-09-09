@@ -8,6 +8,8 @@ public interface MosaicArtist {
 
     int getTileHeight();
 
+    List<MosaicShape> getDisabledShapes();
+
     List<BufferedImage> getThumbnails();
 
     BufferedArtImage getTileForRegion(BufferedArtImage var1);

@@ -16,12 +16,21 @@ import java.util.concurrent.TimeUnit;
 
 public class RectangleMosaicArtist implements MosaicArtist {
 
-    private static final double EPS = 1;
+    private static final double EPS = 1E-5;
     private static final double TOLERANCE = 10;
+    private static final int MIN_PICTURES = 2;
+    private static final int LIST_SIZE = 20;
+    private static final int TILE_SPACING = 3;
 
     private List<MosaicShape> shapes;
+    private List<MosaicShape> disabledShapes;
     private int tileWidth;
     private int tileHeight;
+
+    @Override
+    public List<MosaicShape> getDisabledShapes() {
+        return disabledShapes;
+    }
 
     public RectangleMosaicArtist(List<BufferedImage> images, int tileWidth, int tileHeight) {
         if (images.isEmpty()) {
@@ -40,6 +49,7 @@ public class RectangleMosaicArtist implements MosaicArtist {
 
     private void initialize(List<BufferedImage> images, int tileWidth, int tileHeight, int numThreads) {
         this.shapes = new ArrayList<>();
+        this.disabledShapes = new ArrayList<>();
         this.tileHeight = tileHeight;
         this.tileWidth = tileWidth;
         int totalLength = images.size();
@@ -92,72 +102,85 @@ public class RectangleMosaicArtist implements MosaicArtist {
         int average = RectangleCalculator.getInstance().averageColor(region.toBufferedImage());
         MosaicShape tile = findNearest(average, shapes);
         tile.drawMe(result);
+        decreaseDisabledCounts();
         return result;
+    }
+
+    private void decreaseDisabledCounts() {
+        for (MosaicShape shape : shapes) {
+            if (shape.isDisabled()) {
+                shape.decreaseDisabled();
+            }
+        }
     }
 
     /**
      * Find the shape with the best matching color from a list of shapes.
      *
-     * @param target
-     *     the target color as argb.
-     * @param shapes
-     *     the available shapes (cannot be empty)
+     * @param target the target color as argb.
+     * @param shapes the available shapes (cannot be empty)
      * @return the best matching shape
      */
     protected final MosaicShape findNearest(int target,
                                             Collection<MosaicShape> shapes) {
         List<MosaicShape> nearest = new ArrayList<>();
+        int additionalListSize = 0;
 
         Iterator<MosaicShape> iter = shapes.iterator();
         MosaicShape first = iter.next();
+        while (first.isDisabled()) {
+            first = iter.next();
+        }
         nearest.add(first);
 
         double closestDist = colorError(target, first.getAverageColor());
 
         while (iter.hasNext()) {
             MosaicShape next = iter.next();
-            double nextDist = colorError(target, next.getAverageColor());
 
-            if (nextDist < closestDist) {
+            if (next.isDisabled()) {
+                //Skip disabled Tile
+                continue;
+            }
+
+            double nextDist = colorError(target, next.getAverageColor());
+            if (Math.abs(closestDist - nextDist) < EPS) {
+                //Distances equal
+                additionalListSize++;
+                nearest.add(next);
+            } else if (nextDist < closestDist) {
+                //New smallest
+                if (nearest.size() >= LIST_SIZE + additionalListSize) {
+                    nearest.remove(0);
+                }
+                if (nextDist + TOLERANCE < closestDist) {
+                    nearest.remove(nearest.size() - 1);
+                }
                 nearest.add(next);
                 closestDist = nextDist;
-                nearest.remove(first);
-                break;
-            }
-
-            /*if (Math.abs(dist - nextDist) < EPS) {
-                // Distances equal
-                nearest.add(next);
-            } else if (nextDist < dist) {
-                // New smallest
-                nearest.clear();
-                nearest.add(next);
-                dist = nextDist;
-            }*/
-        }
-
-        while (iter.hasNext()) {
-            MosaicShape nextE = iter.next();
-            double nextDistE = colorError(target, nextE.getAverageColor());
-            if (nextDistE <= TOLERANCE) {
-                nearest.add(nextE);
-            } else if (nextDistE <= closestDist) {
-                nearest.add(nextE);
-                closestDist = nextDistE;
             }
         }
+
+        List<MosaicShape> toRemove = new ArrayList<>();
+        for (MosaicShape shape : nearest) {
+            if (colorError(target, shape.getAverageColor()) > TOLERANCE && nearest.size() - toRemove.size() > MIN_PICTURES) {
+                toRemove.add(shape);
+            }
+        }
+        nearest.removeAll(toRemove);
         System.out.println("Size: " + nearest.size());
-        return nearest.get((int) (Math.random() * nearest.size()));
+        MosaicShape returnShape = nearest.get((int) (Math.random() * nearest.size()));
+        returnShape.setDisabled(TILE_SPACING);
+        disabledShapes.add(returnShape);
+        return returnShape;
     }
 
     /**
      * Calculate the difference between two argb colors as euclidean distance.<br> Range: [0, sqrt(4 *
      * pow(255, 2))]
      *
-     * @param colorA
-     *     the first color
-     * @param colorB
-     *     the second color
+     * @param colorA the first color
+     * @param colorB the second color
      * @return the difference of the colors
      */
     private static double colorError(int colorA, int colorB) {

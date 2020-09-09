@@ -30,6 +30,11 @@ public class RectangleMosaicShape implements MosaicShape {
     }
 
     @Override
+    public void setDisabled(int amount) {
+        this.disabledCounter = amount;
+    }
+
+    @Override
     public boolean isDisabled() {
         return this.disabledCounter > 0;
     }
