@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 public class RectangleMosaicEasel implements MosaicEasel {
     private final int numThreads;
 
-    public RectangleMosaicEasel(int numThreads) {
+    /*public RectangleMosaicEasel(int numThreads) {
         this.numThreads = numThreads;
         //System.out.println("Available Threads: " + numThreads);
-    }
+    }*/
 
     public RectangleMosaicEasel() {
         this.numThreads = Runtime.getRuntime().availableProcessors();

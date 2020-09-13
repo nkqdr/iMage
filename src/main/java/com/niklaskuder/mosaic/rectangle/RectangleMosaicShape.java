@@ -23,19 +23,19 @@ public class RectangleMosaicShape implements MosaicShape {
     }
 
     @Override
-    public void decreaseDisabled() {
+    public synchronized void decreaseDisabled() {
         if (this.disabledCounter > 0) {
             this.disabledCounter--;
         }
     }
 
     @Override
-    public void setDisabled(int amount) {
+    public synchronized void setDisabled(int amount) {
         this.disabledCounter = amount;
     }
 
     @Override
-    public boolean isDisabled() {
+    public synchronized boolean isDisabled() {
         return this.disabledCounter > 0;
     }
 

@@ -2,6 +2,7 @@ package com.niklaskuder.mosaic.rectangle;
 
 import com.niklaskuder.mosaic.base.BufferedArtImage;
 import com.niklaskuder.mosaic.base.MosaicArtist;
+import com.niklaskuder.mosaic.base.MosaicShape;
 
 public final class MosaicRunnable implements Runnable {
     private static int heightIndex = 0;
@@ -35,7 +36,16 @@ public final class MosaicRunnable implements Runnable {
             }
             BufferedArtImage sub = image.getSubimage(x, y, width, height);
             BufferedArtImage tile = artist.getTileForRegion(sub);
+            decreaseDisabledCounts();
             result.setSubimage(x, y, tile);
+        }
+    }
+
+    private synchronized void decreaseDisabledCounts() {
+        for (MosaicShape shape : artist.getShapes()) {
+            if (shape.isDisabled()) {
+                shape.decreaseDisabled();
+            }
         }
     }
 

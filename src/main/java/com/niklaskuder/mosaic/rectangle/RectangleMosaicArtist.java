@@ -20,17 +20,11 @@ public class RectangleMosaicArtist implements MosaicArtist {
     private static final double TOLERANCE = 10;
     private static final int MIN_PICTURES = 2;
     private static final int LIST_SIZE = 20;
-    private static final int TILE_SPACING = 3;
+    private static final int TILE_SPACING = 5;
 
     private List<MosaicShape> shapes;
-    private List<MosaicShape> disabledShapes;
     private int tileWidth;
     private int tileHeight;
-
-    @Override
-    public List<MosaicShape> getDisabledShapes() {
-        return disabledShapes;
-    }
 
     public RectangleMosaicArtist(List<BufferedImage> images, int tileWidth, int tileHeight) {
         if (images.isEmpty()) {
@@ -40,16 +34,19 @@ public class RectangleMosaicArtist implements MosaicArtist {
         initialize(images, tileWidth, tileHeight, numThreads);
     }
 
-    public RectangleMosaicArtist(List<BufferedImage> images, int tileWidth, int tileHeight, int numThreads) {
+    /*public RectangleMosaicArtist(List<BufferedImage> images, int tileWidth, int tileHeight, int numThreads) {
         if (images.isEmpty()) {
             throw new IllegalArgumentException("no tiles provided");
         }
         initialize(images, tileWidth, tileHeight, numThreads);
+    }*/
+
+    public List<MosaicShape> getShapes() {
+        return shapes;
     }
 
     private void initialize(List<BufferedImage> images, int tileWidth, int tileHeight, int numThreads) {
         this.shapes = new ArrayList<>();
-        this.disabledShapes = new ArrayList<>();
         this.tileHeight = tileHeight;
         this.tileWidth = tileWidth;
         int totalLength = images.size();
@@ -102,16 +99,7 @@ public class RectangleMosaicArtist implements MosaicArtist {
         int average = RectangleCalculator.getInstance().averageColor(region.toBufferedImage());
         MosaicShape tile = findNearest(average, shapes);
         tile.drawMe(result);
-        decreaseDisabledCounts();
         return result;
-    }
-
-    private void decreaseDisabledCounts() {
-        for (MosaicShape shape : shapes) {
-            if (shape.isDisabled()) {
-                shape.decreaseDisabled();
-            }
-        }
     }
 
     /**
@@ -121,14 +109,17 @@ public class RectangleMosaicArtist implements MosaicArtist {
      * @param shapes the available shapes (cannot be empty)
      * @return the best matching shape
      */
-    protected final MosaicShape findNearest(int target,
-                                            Collection<MosaicShape> shapes) {
+    protected final MosaicShape findNearest(int target, Collection<MosaicShape> shapes) {
         List<MosaicShape> nearest = new ArrayList<>();
         int additionalListSize = 0;
 
         Iterator<MosaicShape> iter = shapes.iterator();
         MosaicShape first = iter.next();
         while (first.isDisabled()) {
+            System.out.println("First is disabled.");
+            if (!iter.hasNext()) {
+                throw new IllegalStateException("All tiles disabled.");
+            }
             first = iter.next();
         }
         nearest.add(first);
@@ -138,9 +129,13 @@ public class RectangleMosaicArtist implements MosaicArtist {
         while (iter.hasNext()) {
             MosaicShape next = iter.next();
 
-            if (next.isDisabled()) {
+            while (next.isDisabled()) {
+                System.out.println("Next is disabled.");
+                if (!iter.hasNext()) {
+                    return nearest.get(0);
+                }
                 //Skip disabled Tile
-                continue;
+                next = iter.next();
             }
 
             double nextDist = colorError(target, next.getAverageColor());
@@ -160,6 +155,7 @@ public class RectangleMosaicArtist implements MosaicArtist {
                 closestDist = nextDist;
             }
         }
+        System.out.println("Size: " + nearest.size());
 
         List<MosaicShape> toRemove = new ArrayList<>();
         for (MosaicShape shape : nearest) {
@@ -168,10 +164,8 @@ public class RectangleMosaicArtist implements MosaicArtist {
             }
         }
         nearest.removeAll(toRemove);
-        System.out.println("Size: " + nearest.size());
         MosaicShape returnShape = nearest.get((int) (Math.random() * nearest.size()));
         returnShape.setDisabled(TILE_SPACING);
-        disabledShapes.add(returnShape);
         return returnShape;
     }
 

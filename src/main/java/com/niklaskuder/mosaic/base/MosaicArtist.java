@@ -8,7 +8,7 @@ public interface MosaicArtist {
 
     int getTileHeight();
 
-    List<MosaicShape> getDisabledShapes();
+    List<MosaicShape> getShapes();
 
     List<BufferedImage> getThumbnails();
 
