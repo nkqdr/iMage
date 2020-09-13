@@ -95,11 +95,10 @@ public class RectangleMosaicArtist implements MosaicArtist {
         if (region.getWidth() > this.tileWidth || region.getHeight() > this.tileHeight) {
             throw new IllegalArgumentException("requested tiling is greater than tileWidth or tileHeight");
         }
-        BufferedArtImage result = region.createBlankImage();
         int average = RectangleCalculator.getInstance().averageColor(region.toBufferedImage());
         MosaicShape tile = findNearest(average, shapes);
-        tile.drawMe(result);
-        return result;
+        tile.drawMe(region);
+        return region;
     }
 
     /**
@@ -116,7 +115,7 @@ public class RectangleMosaicArtist implements MosaicArtist {
         Iterator<MosaicShape> iter = shapes.iterator();
         MosaicShape first = iter.next();
         while (first.isDisabled()) {
-            System.out.println("First is disabled.");
+            //System.out.println("First is disabled.");
             if (!iter.hasNext()) {
                 throw new IllegalStateException("All tiles disabled.");
             }
@@ -130,7 +129,7 @@ public class RectangleMosaicArtist implements MosaicArtist {
             MosaicShape next = iter.next();
 
             while (next.isDisabled()) {
-                System.out.println("Next is disabled.");
+                //System.out.println("Next is disabled.");
                 if (!iter.hasNext()) {
                     return nearest.get(0);
                 }

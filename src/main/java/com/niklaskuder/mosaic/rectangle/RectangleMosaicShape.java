@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 public class RectangleMosaicShape implements MosaicShape {
+    private static final int CORRECTION_INTENSITY = 15;
+
     private final BufferedImage image;
     private final int width;
     private final int height;
@@ -79,11 +81,63 @@ public class RectangleMosaicShape implements MosaicShape {
         int w = Math.min(this.getWidth(), image.getWidth());
         int h = Math.min(this.getHeight(), image.getHeight());
 
+        BufferedArtImage correctedImage = getColorCorrectedMe(image);
+
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                image.setRGB(x, y, this.image.getRGB(x, y));
+                image.setRGB(x, y, correctedImage.getRGB(x, y));
             }
         }
+    }
+
+    private int getOptimalCorrectionIntensity(int goal, int current) {
+        if (current + CORRECTION_INTENSITY < goal
+                || current - CORRECTION_INTENSITY > goal) {
+            return CORRECTION_INTENSITY;
+        } else if (current + CORRECTION_INTENSITY > goal) {
+            return goal - current;
+        } else if (current - CORRECTION_INTENSITY < goal) {
+            return current - goal;
+        }
+        return CORRECTION_INTENSITY;
+    }
+
+    private BufferedArtImage getColorCorrectedMe(BufferedArtImage input) {
+        BufferedArtImage correctedMe = new BufferedArtImage(this.image);
+        for (int x = 0; x < input.getWidth(); x++) {
+            for (int y = 0; y < input.getHeight(); y++) {
+                int inputRGB = input.getRGB(x, y);
+                Color inputPixelColor = new Color(inputRGB);
+                int tileRGB = this.image.getRGB(x, y);
+                Color tilePixelColor = new Color(tileRGB);
+                int correctionIntensity = getOptimalCorrectionIntensity(inputRGB, tileRGB);
+                int newRed = tilePixelColor.getRed() < inputPixelColor.getRed()
+                        ? tilePixelColor.getRed() + correctionIntensity
+                        : tilePixelColor.getRed() - correctionIntensity;
+                int newGreen = tilePixelColor.getGreen() < inputPixelColor.getGreen()
+                        ? tilePixelColor.getGreen() + correctionIntensity
+                        : tilePixelColor.getGreen() - correctionIntensity;
+                int newBlue = tilePixelColor.getBlue() < inputPixelColor.getBlue()
+                        ? tilePixelColor.getBlue() + correctionIntensity
+                        : tilePixelColor.getBlue() - correctionIntensity;
+                int newAlpha = tilePixelColor.getAlpha() < inputPixelColor.getAlpha()
+                        ? tilePixelColor.getAlpha() + correctionIntensity
+                        : tilePixelColor.getAlpha() - correctionIntensity;
+
+                newRed = Math.min(newRed, 255);
+                newRed = Math.max(newRed, 0);
+                newGreen = Math.min(newGreen, 255);
+                newGreen = Math.max(newGreen, 0);
+                newBlue = Math.min(newBlue, 255);
+                newBlue = Math.max(newBlue, 0);
+                newAlpha = Math.min(newAlpha, 255);
+                newAlpha = Math.max(newAlpha, 0);
+
+                Color correctedColor = new Color(newRed, newGreen, newBlue, newAlpha);
+                correctedMe.setRGB(x, y, correctedColor.getRGB());
+            }
+        }
+        return correctedMe;
     }
 
     @Override
