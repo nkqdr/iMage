@@ -34,6 +34,8 @@ Here are a few comparison images between the results from my program and TurboMo
 
 **In conclusion, the overall speed-up is at roughly 71x, and my algorithm never needed longer than 10 seconds for images that were around 4K resolution.**
 
+As for the use case of the photographer who gave me this idea, I also rendered a 25000x16665px image using my program to see how well it scales. This image took 2 minutes and 51 seconds to complete. So theoretically my algorithm can compute two 25000x16665px images in the same amount of time that TurboMosaic took to compute the “Bridge” example.
+
 Also, sometimes the TurboMosaic algorithm just places black squares as mosaic images whereas my algorithm never did anything like that.
 
 ## How to use
