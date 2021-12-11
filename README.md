@@ -1,4 +1,4 @@
-# ImageMosaic
+# iMage
 A small Java-Program that takes a collection of images together with a single selected image and then tries to replicate the single image with all of the other images.
 
 ## Motivation
